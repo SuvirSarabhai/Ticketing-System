@@ -8,6 +8,10 @@
  * - Refresh token is stored in localStorage (survives page reload)
  */
 
+// In production (Vercel) this is the Railway backend URL.
+// In dev it's empty so Vite's proxy handles /api/* → localhost:3001
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 let accessToken = null; // in-memory only
 
 export function setAccessToken(token) {
@@ -36,7 +40,7 @@ async function apiFetch(url, options = {}, isRetry = false) {
     headers['Authorization'] = `Bearer ${accessToken}`;
   }
 
-  const response = await fetch(url, { ...options, headers });
+  const response = await fetch(API_BASE + url, { ...options, headers });
 
   // 403 → try to refresh the access token once
   if (response.status === 403 && !isRetry) {
@@ -47,7 +51,7 @@ async function apiFetch(url, options = {}, isRetry = false) {
       return;
     }
 
-    const refreshRes = await fetch('/api/auth/token/refresh', {
+    const refreshRes = await fetch(API_BASE + '/api/auth/token/refresh', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ refreshToken }),
